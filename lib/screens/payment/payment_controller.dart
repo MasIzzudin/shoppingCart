@@ -125,6 +125,20 @@ class PaymentController extends GetxController {
     update();
   }
 
+  List<num> isLastValueGreaterThan(num value, List<num> buttons) {
+    num lastButton = buttons.last;
+    bool isLastValid = lastButton % 10000 == value;
+
+    if (!isLastValid) {
+      // Hapus elemen yang mengandung angka 5000 di akhir nominal
+      buttons = buttons.where((number) => number % 10000 != value).toList();
+    } else {
+      buttons = buttons.sublist(0, 3);
+    }
+
+    return buttons;
+  }
+
   List<num> generateDenominationPrice() {
     num total = subTotal;
     List availableCounts = [2000, 5000, 10000, 20000, 50000, 100000];
@@ -140,7 +154,7 @@ class PaymentController extends GetxController {
         buttons = richDenomination(total, paymentButtonCounts, availableCounts);
         buttons = [total, ...buttons];
         buttons.sort();
-        buttons = buttons.sublist(0, 3);
+        buttons = isLastValueGreaterThan(5000, buttons);
       } else {
         buttons = [total];
       }
@@ -190,12 +204,14 @@ class PaymentController extends GetxController {
     List.generate(availableCounts.length, (index) {
       var count = availableCounts[index];
       if (!paymentButtonCounts.contains(count)) {
+        // jika jumlah total yang tersedia lebih besar dari total pembayaran
         if (count > total) {
           paymentButtonCounts.add(count);
         }
       }
     });
 
+    //jika jumlah button tidak mencukupi dikarenakan jumlah total yang tersedia tidak mencukupi
     if (paymentButtonCounts.length < 3) {
       List asc = availableCounts.map((element) => element + 5000).toList();
       richDenomination(
